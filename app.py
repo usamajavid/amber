@@ -2,9 +2,9 @@ import streamlit as st
 import base64
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="Amber ❤️ Osama", page_icon="💖", layout="centered")
+st.set_page_config(page_title="Amber ❤️ Usama", page_icon="💖", layout="centered")
 
-# ------------------------ AUDIO (for the music bar iframe) ------------------------
+# ------------------------ AUDIO ------------------------
 @st.cache_data
 def load_audio_b64(path: str) -> str:
     with open(path, "rb") as f:
@@ -12,7 +12,7 @@ def load_audio_b64(path: str) -> str:
 
 AUDIO_B64 = load_audio_b64("music.mp3")
 
-# ------------------------ GLOBAL BACKGROUND + UI THEME ------------------------
+# ------------------------ GLOBAL BACKGROUND + THEME ------------------------
 st.markdown(
     """
 <style>
@@ -25,18 +25,18 @@ html, body, [data-testid="stAppViewContainer"] {
       linear-gradient(180deg, #090016, #1a002d) !important;
 }
 
-/* remove the default white background behind the app */
+/* remove default white */
 [data-testid="stAppViewContainer"] > .main {
     background: transparent !important;
 }
 
-/* nicer spacing */
+/* Center width */
 .block-container {
-    padding-top: 1.0rem !important;
+    padding-top: 4.5rem !important; /* space for music bar */
     max-width: 880px !important;
 }
 
-/* CARD - FIXED TEXT COLOR */
+/* Card */
 .val-card {
     background: rgba(255,255,255,0.92);
     border: 1px solid rgba(255,255,255,0.55);
@@ -46,30 +46,31 @@ html, body, [data-testid="stAppViewContainer"] {
     text-align: center;
 }
 
-/* FIXED TEXT COLORS */
+/* Text (VISIBLE) */
 .val-title {
     font-family: ui-sans-serif, system-ui;
     font-size: 42px;
     font-weight: 900;
-    color: #2b0a1a;   /* DARK TEXT so it shows */
+    color: #2b0a1a;
 }
 .val-sub {
     font-family: ui-sans-serif, system-ui;
     font-size: 15px;
-    font-weight: 600;
-    color: #5b2b3f;   /* DARKER subtitle */
+    font-weight: 650;
+    color: #5b2b3f;
     opacity: 0.92;
     margin-top: 8px;
+    line-height: 1.6;
 }
 
-/* Button style */
+/* Buttons */
 .stButton > button{
     width: 100%;
     border: 0 !important;
     border-radius: 18px !important;
     padding: 0.85rem 1rem !important;
     font-size: 18px !important;
-    font-weight: 800 !important;
+    font-weight: 850 !important;
     color: white !important;
     background: linear-gradient(135deg, rgba(255,75,139,0.98), rgba(255,123,189,0.98)) !important;
     box-shadow: 0 18px 45px rgba(255,75,139,0.25) !important;
@@ -77,31 +78,39 @@ html, body, [data-testid="stAppViewContainer"] {
 .stButton > button:hover{ filter: brightness(1.02); }
 .stButton > button:active{ transform: scale(0.99); }
 
-/* Progress bar spacing */
-[data-testid="stProgress"] {
-    margin-top: 6px;
-    margin-bottom: 16px;
-}
+/* Keep Streamlit content above background */
+section.main > div { position: relative; z-index: 3; }
+
+/* Progress style spacing */
+[data-testid="stProgress"] { margin: 10px 0 20px 0; }
 </style>
 """,
     unsafe_allow_html=True
 )
 
-# ------------------------ HEARTS FULL PAGE (NOT JUST TOP) ------------------------
+# ------------------------ FULL PAGE HEARTS (FIXED & VISIBLE) ------------------------
 components.html(
     """
 <style>
-.hearts-wrap { position: fixed; inset: 0; pointer-events:none; z-index: 1; overflow:hidden; }
-.heart {
-  position: absolute;
-  bottom: -40px;
-  opacity: 0.90;
-  filter: drop-shadow(0 12px 18px rgba(255,75,139,0.25));
-  animation: floatUp linear forwards;
+.hearts-wrap {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2; /* IMPORTANT: above background but below cards */
+    overflow: hidden;
 }
+
+.heart {
+    position: absolute;
+    bottom: -40px;
+    opacity: 0.95;
+    filter: drop-shadow(0 12px 18px rgba(255,75,139,0.25));
+    animation: floatUp linear forwards;
+}
+
 @keyframes floatUp {
-  from { transform: translateY(0) translateX(0) rotate(0deg); opacity: .95; }
-  to   { transform: translateY(-120vh) translateX(var(--dx)) rotate(var(--rot)); opacity: 0; }
+    from { transform: translateY(0) translateX(0) rotate(0deg); opacity: .95; }
+    to   { transform: translateY(-125vh) translateX(var(--dx)) rotate(var(--rot)); opacity: 0; }
 }
 </style>
 
@@ -109,6 +118,7 @@ components.html(
 
 <script>
 (function(){
+  // prevent duplicates
   if (window.__FULLPAGE_HEARTS__) return;
   window.__FULLPAGE_HEARTS__ = true;
 
@@ -120,22 +130,24 @@ components.html(
     h.className = "heart";
     h.textContent = emojis[Math.floor(Math.random()*emojis.length)];
     h.style.left = (Math.random()*100) + "vw";
-    h.style.fontSize = (18 + Math.random()*22) + "px";
-    h.style.setProperty("--dx", ((Math.random()*120)-60) + "px");
-    h.style.setProperty("--rot", ((Math.random()*40)-20) + "deg");
-    const dur = 7 + Math.random()*6;
+    h.style.fontSize = (18 + Math.random()*26) + "px";
+    h.style.setProperty("--dx", ((Math.random()*140)-70) + "px");
+    h.style.setProperty("--rot", ((Math.random()*50)-25) + "deg");
+    const dur = 6 + Math.random()*6;
     h.style.animationDuration = dur + "s";
+
     wrap.appendChild(h);
     setTimeout(()=>h.remove(), (dur+0.5)*1000);
   }
-  setInterval(spawn, 420);
+
+  setInterval(spawn, 350);
 })();
 </script>
 """,
     height=0
 )
 
-# ------------------------ MUSIC BAR (VISIBLE) ------------------------
+# ------------------------ MUSIC BAR (TOP) ------------------------
 components.html(
     f"""
 <style>
@@ -162,14 +174,14 @@ components.html(
   flex: 1;
   color: rgba(255,255,255,0.92);
   font-family: ui-sans-serif, system-ui;
-  font-weight: 700;
+  font-weight: 750;
   font-size: 13px;
   line-height: 1.2;
 }}
 .mb-sub {{
   display:block;
   color: rgba(255,255,255,0.65);
-  font-weight: 600;
+  font-weight: 650;
   font-size: 11px;
   margin-top: 2px;
 }}
@@ -182,7 +194,7 @@ components.html(
   border-radius: 14px;
   padding: 10px 12px;
   font-family: ui-sans-serif, system-ui;
-  font-weight: 800;
+  font-weight: 850;
   font-size: 12px;
   box-shadow: 0 16px 40px rgba(255,75,139,0.18);
 }}
@@ -240,7 +252,7 @@ components.html(
     height=80
 )
 
-# ------------------------ APP STATE ------------------------
+# ------------------------ STATE ------------------------
 if "stage" not in st.session_state:
     st.session_state.stage = 0
 if "score" not in st.session_state:
@@ -250,7 +262,7 @@ def go(stage: int):
     st.session_state.stage = stage
     st.rerun()
 
-# ------------------------ QUIZ DATA ------------------------
+# ------------------------ QUIZ ------------------------
 quiz = [
     ("Where did we first meet?", ["At university", "In your house", "On the street"], "In your house"),
     ("Where did we go for our first date?", ["Hyde Park", "V&A museum", "Cinema"], "V&A museum"),
@@ -258,8 +270,8 @@ quiz = [
 ]
 TOTAL = len(quiz)
 
-# ------------------------ PROGRESS ------------------------
-st.progress(min(1.0, st.session_state.score / TOTAL))
+# Progress
+st.progress(min(1.0, st.session_state.score / TOTAL if TOTAL else 0))
 
 # ------------------------ PAGES ------------------------
 if st.session_state.stage == 0:
@@ -327,7 +339,7 @@ elif st.session_state.stage == TOTAL + 2:
             I love you.<br>
             I cherish you.<br>
             And I want to hang out with you for the rest of my life. ❤️<br><br>
-            — Osama
+            — Usama
             </div>
         </div>
         """,
@@ -359,14 +371,37 @@ elif st.session_state.stage == TOTAL + 3:
         if st.button("OF COURSE 😍"):
             go(TOTAL + 4)
 
+# ✅ NEW FINAL QUESTION
+elif st.session_state.stage == TOTAL + 4:
+    st.markdown(
+        """
+        <div class="val-card">
+            <div class="val-title" style="font-size:30px;">One last thing 💗</div>
+            <div class="val-sub" style="font-size:18px; margin-top:12px;">
+                Where do you wanna go for our date?
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.write("")
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("🧺 Small picnic"):
+            go(TOTAL + 5)
+    with c2:
+        if st.button("🏙️ London"):
+            go(TOTAL + 5)
+
 else:
     st.balloons()
     st.markdown(
         """
         <div class="val-card">
-            <div class="val-title">Yayyy 💖</div>
+            <div class="val-title">Perfect 💖</div>
             <div class="val-sub" style="font-size:18px;">
-                We have a Valentine date now 😘<br>
+                It’s a date 😘 <br>
                 I can’t wait to spend this day with you, Amber ❤️
             </div>
         </div>
