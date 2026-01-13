@@ -3,20 +3,19 @@ import base64
 import random
 import glob
 import os
-from datetime import datetime
-import streamlit.components.v1 as components
+from datetime import datetime, date
 
-st.set_page_config(page_title="Amber ❤️ Usama", page_icon="💖", layout="centered")
+st.set_page_config(page_title="💖 For My Love", page_icon="💖", layout="centered")
 
-# ------------------------ AUDIO ------------------------
+# ------------------------ AUDIO BYTES (Streamlit-native, reliable) ------------------------
 @st.cache_data
-def load_audio_b64(path: str) -> str:
+def load_audio_bytes(path: str) -> bytes:
     with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
+        return f.read()
 
-AUDIO_B64 = load_audio_b64("music.mp3")
+AUDIO_BYTES = load_audio_bytes("music.mp3")
 
-# ------------------------ GLOBAL THEME ------------------------
+# ------------------------ THEME (FULL PAGE BACKGROUND) ------------------------
 st.markdown(
     """
 <style>
@@ -27,9 +26,15 @@ html, body, [data-testid="stAppViewContainer"] {
       radial-gradient(800px 500px at 80% 30%, rgba(255,123,189,0.18), transparent 60%),
       linear-gradient(180deg, #090016, #1a002d) !important;
 }
-[data-testid="stAppViewContainer"] > .main { background: transparent !important; }
-.block-container { padding-top: 2.2rem !important; max-width: 980px !important; }
 
+[data-testid="stAppViewContainer"] > .main { background: transparent !important; }
+
+.block-container {
+    padding-top: 1.0rem !important;
+    max-width: 1000px !important;
+}
+
+/* Cards */
 .val-card {
     background: rgba(255,255,255,0.92);
     border: 1px solid rgba(255,255,255,0.55);
@@ -38,29 +43,33 @@ html, body, [data-testid="stAppViewContainer"] {
     box-shadow: 0 18px 60px rgba(0,0,0,0.35);
     text-align: center;
 }
+
 .val-title {
     font-family: ui-sans-serif, system-ui;
-    font-size: 42px;
-    font-weight: 900;
+    font-size: 44px;
+    font-weight: 950;
     color: #2b0a1a;
-}
-.val-sub {
-    font-family: ui-sans-serif, system-ui;
-    font-size: 15px;
-    font-weight: 650;
-    color: #5b2b3f;
-    opacity: 0.92;
-    margin-top: 8px;
-    line-height: 1.6;
+    letter-spacing: -0.3px;
 }
 
+.val-sub {
+    font-family: ui-sans-serif, system-ui;
+    font-size: 16px;
+    font-weight: 700;
+    color: #5b2b3f;
+    opacity: 0.92;
+    margin-top: 10px;
+    line-height: 1.65;
+}
+
+/* Buttons */
 .stButton > button{
     width: 100%;
     border: 0 !important;
     border-radius: 18px !important;
     padding: 0.85rem 1rem !important;
     font-size: 18px !important;
-    font-weight: 850 !important;
+    font-weight: 900 !important;
     color: white !important;
     background: linear-gradient(135deg, rgba(255,75,139,0.98), rgba(255,123,189,0.98)) !important;
     box-shadow: 0 18px 45px rgba(255,75,139,0.25) !important;
@@ -68,14 +77,16 @@ html, body, [data-testid="stAppViewContainer"] {
 .stButton > button:hover{ filter: brightness(1.02); }
 .stButton > button:active{ transform: scale(0.99); }
 
+/* Keep content above hearts */
 section.main > div { position: relative; z-index: 3; }
-[data-testid="stProgress"] { margin: 10px 0 18px 0; }
+
+[data-testid="stProgress"] { margin: 12px 0 18px 0; }
 
 /* Timeline */
 .timeline {
   text-align: left;
   margin-top: 14px;
-  background: rgba(255,255,255,0.82);
+  background: rgba(255,255,255,0.86);
   border: 1px solid rgba(255,255,255,0.55);
   border-radius: 20px;
   padding: 18px;
@@ -88,10 +99,10 @@ section.main > div { position: relative; z-index: 3; }
 }
 .trow:last-child { border-bottom: none; }
 .ticon { font-size: 22px; width: 32px; text-align: center; }
-.ttitle { font-weight: 900; color: #2b0a1a; font-family: ui-sans-serif, system-ui; }
-.tdesc { color: #5b2b3f; opacity: 0.92; font-weight: 650; font-family: ui-sans-serif, system-ui; }
+.ttitle { font-weight: 950; color: #2b0a1a; font-family: ui-sans-serif, system-ui; }
+.tdesc { color: #5b2b3f; opacity: 0.92; font-weight: 750; font-family: ui-sans-serif, system-ui; }
 
-/* Gallery */
+/* Gallery card */
 .gallery-card {
   background: rgba(255,255,255,0.92);
   border: 1px solid rgba(255,255,255,0.55);
@@ -101,15 +112,17 @@ section.main > div { position: relative; z-index: 3; }
 }
 .caption {
   font-family: ui-sans-serif, system-ui;
-  font-weight: 800;
+  font-weight: 950;
   color: #2b0a1a;
-  margin-top: 8px;
+  margin-top: 6px;
+  font-size: 20px;
 }
 .subcap {
   font-family: ui-sans-serif, system-ui;
-  font-weight: 650;
+  font-weight: 750;
   color: #5b2b3f;
   opacity: 0.9;
+  font-size: 13px;
 }
 
 /* Invitation */
@@ -132,8 +145,8 @@ section.main > div { position: relative; z-index: 3; }
   margin-top: 10px;
   font-family: ui-sans-serif, system-ui;
   color: #5b2b3f;
-  font-weight: 750;
-  line-height: 1.8;
+  font-weight: 800;
+  line-height: 1.85;
 }
 .badge {
   display: inline-block;
@@ -142,7 +155,7 @@ section.main > div { position: relative; z-index: 3; }
   background: linear-gradient(135deg, rgba(255,75,139,0.95), rgba(255,123,189,0.95));
   color: white;
   font-family: ui-sans-serif, system-ui;
-  font-weight: 900;
+  font-weight: 950;
   font-size: 12px;
   margin-top: 12px;
 }
@@ -151,16 +164,16 @@ section.main > div { position: relative; z-index: 3; }
     unsafe_allow_html=True
 )
 
-# ------------------------ HEARTS (PURE CSS) ------------------------
-def render_hearts(n=38):
+# ------------------------ HEARTS (PURE CSS, FULL PAGE) ------------------------
+def render_hearts(n=42):
     emojis = ["💖", "💕", "💘", "❤️", "🌹", "✨"]
     spans = []
     for _ in range(n):
         left = random.randint(0, 100)
-        size = random.randint(18, 36)
-        dur = round(random.uniform(7.5, 14.5), 2)
-        delay = round(random.uniform(0, 6), 2)
-        drift = random.randint(-90, 90)
+        size = random.randint(16, 34)
+        dur = round(random.uniform(7.0, 14.0), 2)
+        delay = round(random.uniform(0, 7), 2)
+        drift = random.randint(-110, 110)
         emoji = random.choice(emojis)
         spans.append(
             f"<span class='vheart' style='--l:{left}vw; --s:{size}px; --d:{dur}s; --t:{delay}s; --x:{drift}px'>{emoji}</span>"
@@ -170,18 +183,27 @@ def render_hearts(n=38):
         f"""
         <style>
         .vhearts {{
-          position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden;
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          z-index: 2;
+          overflow: hidden;
         }}
         .vheart {{
-          position: absolute; left: var(--l); bottom: -60px; font-size: var(--s);
-          animation: vfloat var(--d) linear infinite; animation-delay: var(--t);
+          position: absolute;
+          left: var(--l);
+          bottom: -60px;
+          font-size: var(--s);
+          animation: vfloat var(--d) linear infinite;
+          animation-delay: var(--t);
+          opacity: 0.95;
           filter: drop-shadow(0 10px 16px rgba(255,75,139,0.25));
-          opacity: 0.95; will-change: transform, opacity;
+          will-change: transform, opacity;
         }}
         @keyframes vfloat {{
           0%   {{ transform: translate(0, 0) rotate(0deg); opacity: .95; }}
           15%  {{ opacity: .95; }}
-          100% {{ transform: translate(var(--x), -125vh) rotate(22deg); opacity: 0; }}
+          100% {{ transform: translate(var(--x), -125vh) rotate(18deg); opacity: 0; }}
         }}
         </style>
         <div class="vhearts">{''.join(spans)}</div>
@@ -191,91 +213,6 @@ def render_hearts(n=38):
 
 render_hearts()
 
-# ------------------------ MUSIC BUTTON (TOP RIGHT SMALL) ------------------------
-components.html(
-    f"""
-<style>
-.music-pill {{
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 9999;
-  background: rgba(255,255,255,0.14);
-  border: 1px solid rgba(255,255,255,0.22);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  color: rgba(255,255,255,0.92);
-  border-radius: 999px;
-  padding: 8px 10px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  box-shadow: 0 18px 50px rgba(0,0,0,0.28);
-  font-family: ui-sans-serif, system-ui;
-  font-weight: 850;
-  font-size: 12px;
-}}
-.music-btn {{
-  border: none;
-  cursor: pointer;
-  background: linear-gradient(135deg, rgba(255,75,139,0.95), rgba(255,123,189,0.95));
-  color: white;
-  border-radius: 999px;
-  padding: 7px 10px;
-  font-weight: 950;
-  font-size: 12px;
-}}
-.music-btn:active {{ transform: scale(0.98); }}
-</style>
-
-<audio id="bgm" loop>
-  <source src="data:audio/mp3;base64,{AUDIO_B64}" type="audio/mp3" />
-</audio>
-
-<div class="music-pill">
-  <span>🎵</span>
-  <button class="music-btn" id="mbPlay">Play</button>
-  <button class="music-btn" id="mbPause" style="display:none;">Pause</button>
-</div>
-
-<script>
-  const audio = document.getElementById("bgm");
-  const playBtn = document.getElementById("mbPlay");
-  const pauseBtn = document.getElementById("mbPause");
-
-  const saved = localStorage.getItem("val_music_on");
-  if (saved === "true") {{
-    audio.volume = 0.45;
-    audio.play().then(()=> {{
-      playBtn.style.display="none";
-      pauseBtn.style.display="inline-block";
-    }}).catch(()=>{{}});
-  }}
-
-  playBtn.addEventListener("click", async () => {{
-    audio.volume = 0.45;
-    try {{
-      await audio.play();
-      localStorage.setItem("val_music_on","true");
-      playBtn.style.display="none";
-      pauseBtn.style.display="inline-block";
-    }} catch(e) {{
-      playBtn.textContent = "Tap";
-    }}
-  }});
-
-  pauseBtn.addEventListener("click", () => {{
-    audio.pause();
-    localStorage.setItem("val_music_on","false");
-    pauseBtn.style.display="none";
-    playBtn.style.display="inline-block";
-    playBtn.textContent = "Play";
-  }});
-</script>
-""",
-    height=0
-)
-
 # ------------------------ STATE ------------------------
 if "stage" not in st.session_state:
     st.session_state.stage = 0
@@ -283,22 +220,35 @@ if "score" not in st.session_state:
     st.session_state.score = 0
 if "date_choice" not in st.session_state:
     st.session_state.date_choice = None
+if "show_music" not in st.session_state:
+    st.session_state.show_music = False
 
 def go(stage: int):
     st.session_state.stage = stage
     st.rerun()
 
+# ------------------------ TOP-RIGHT MUSIC CONTROL (STREAMLIT, ALWAYS VISIBLE) ------------------------
+top_left, top_spacer, top_right = st.columns([5, 1, 2], vertical_alignment="center")
+with top_right:
+    # Small, top-right toggle
+    if st.button("🎵 Music", key="music_toggle"):
+        st.session_state.show_music = not st.session_state.show_music
+
+    if st.session_state.show_music:
+        # native audio player (reliable across devices)
+        st.audio(AUDIO_BYTES, format="audio/mp3")
+
 # ------------------------ QUIZ ------------------------
 quiz = [
     ("Where did we first meet?", ["At university", "In your house", "On the street"], "In your house"),
     ("Where did we go for our first date?", ["Hyde Park", "V&A museum", "Cinema"], "V&A museum"),
-    ("Amber, do you like me?", ["Maybe", "I love you", "You're okay 😅"], "I love you"),
+    ("Baby… do you like me?", ["Maybe", "I love you", "You're okay 😅"], "I love you"),
 ]
 TOTAL = len(quiz)
 
 st.progress(min(1.0, st.session_state.score / TOTAL if TOTAL else 0))
 
-# ------------------------ GALLERY HELPERS ------------------------
+# ------------------------ PHOTO HELPERS ------------------------
 def nice_caption(filename: str) -> str:
     base = os.path.splitext(os.path.basename(filename))[0]
     base = base.replace("_", " ").replace("-", " ").strip()
@@ -311,17 +261,62 @@ def load_photos():
     for ext in ("jpg", "jpeg", "png", "webp"):
         paths += glob.glob(os.path.join("photos", f"*.{ext}"))
         paths += glob.glob(os.path.join("photos", f"*.{ext.upper()}"))
-    paths = sorted(paths)
-    return paths
+    return sorted(paths)
+
+# ------------------------ VALENTINE DATE (always Feb 14) ------------------------
+def next_feb14():
+    today = date.today()
+    target = date(today.year, 2, 14)
+    if today > target:
+        target = date(today.year + 1, 2, 14)
+    return target
+
+VAL_DATE = next_feb14().strftime("%d %B %Y")  # "14 February 2026" etc.
+
+# ------------------------ OPTION LAYOUT (fix “middle” issue) ------------------------
+def render_options(options, stage_idx, correct):
+    n = len(options)
+
+    # 3 options -> 3 columns (no awkward middle)
+    if n == 3:
+        cols = st.columns(3)
+        for i, opt in enumerate(options):
+            with cols[i]:
+                if st.button(opt, key=f"opt_{stage_idx}_{i}"):
+                    if opt == correct:
+                        st.session_state.score += 1
+                    st.session_state.stage += 1
+                    st.rerun()
+        return
+
+    # 2 options -> 2 columns
+    if n == 2:
+        cols = st.columns(2)
+        for i, opt in enumerate(options):
+            with cols[i]:
+                if st.button(opt, key=f"opt_{stage_idx}_{i}"):
+                    if opt == correct:
+                        st.session_state.score += 1
+                    st.session_state.stage += 1
+                    st.rerun()
+        return
+
+    # fallback -> stacked
+    for i, opt in enumerate(options):
+        if st.button(opt, key=f"opt_{stage_idx}_{i}"):
+            if opt == correct:
+                st.session_state.score += 1
+            st.session_state.stage += 1
+            st.rerun()
 
 # ------------------------ PAGES ------------------------
 if st.session_state.stage == 0:
     st.markdown(
         """
         <div class="val-card">
-            <div class="val-title">Amber 💖</div>
+            <div class="val-title">Hey baby 💖</div>
             <div class="val-sub">
-                I made this just for you. Put your headphones on… then press start. 💌
+                I made this for you, love. Put your headphones on… then press start. 💌
             </div>
         </div>
         """,
@@ -333,32 +328,25 @@ if st.session_state.stage == 0:
 
 elif 1 <= st.session_state.stage <= TOTAL:
     q, options, answer = quiz[st.session_state.stage - 1]
+
     st.markdown(
         f"""
         <div class="val-card">
-            <div class="val-title" style="font-size:28px;">Question {st.session_state.stage} of {TOTAL}</div>
-            <div class="val-sub" style="font-size:18px; margin-top:10px;">{q}</div>
+            <div class="val-title" style="font-size:30px;">Question {st.session_state.stage} of {TOTAL}</div>
+            <div class="val-sub" style="font-size:20px; margin-top:10px;">{q}</div>
         </div>
         """,
         unsafe_allow_html=True
     )
     st.write("")
-    cols = st.columns(2)
-    for i, opt in enumerate(options):
-        with cols[i % 2]:
-            if st.button(opt, key=f"opt_{st.session_state.stage}_{i}"):
-                if opt == answer:
-                    st.session_state.score += 1
-                st.session_state.stage += 1
-                st.rerun()
+    render_options(options, st.session_state.stage, answer)
 
-# NEW: "Our Story" section (Timeline + Gallery)
 elif st.session_state.stage == TOTAL + 1:
     st.markdown(
         """
         <div class="val-card">
             <div class="val-title">Our Story 💞</div>
-            <div class="val-sub">Before the surprise… a few memories.</div>
+            <div class="val-sub">Just a few memories, darling… then your surprise.</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -371,7 +359,7 @@ elif st.session_state.stage == TOTAL + 1:
             <div class="ticon">🏠</div>
             <div>
               <div class="ttitle">First time we met</div>
-              <div class="tdesc">In your house — and everything changed.</div>
+              <div class="tdesc">In your house — and my heart knew.</div>
             </div>
           </div>
           <div class="trow">
@@ -385,7 +373,7 @@ elif st.session_state.stage == TOTAL + 1:
             <div class="ticon">💖</div>
             <div>
               <div class="ttitle">Today</div>
-              <div class="tdesc">Still choosing you. Every day. Always.</div>
+              <div class="tdesc">Still choosing you. Always.</div>
             </div>
           </div>
         </div>
@@ -396,24 +384,24 @@ elif st.session_state.stage == TOTAL + 1:
     st.write("")
     st.markdown("<div class='gallery-card'>", unsafe_allow_html=True)
     st.markdown("<div class='caption'>Our Memories 📸</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subcap'>Add photos in a folder named <b>photos/</b> to make this even more personal.</div>", unsafe_allow_html=True)
 
     photos = load_photos()
     st.write("")
+
     if photos:
-        # show as a nice grid
         cols = st.columns(3)
-        for idx, p in enumerate(photos[:12]):  # show up to 12 for a clean look
+        for idx, p in enumerate(photos[:12]):
             with cols[idx % 3]:
                 st.image(p, use_container_width=True)
                 st.caption(nice_caption(p))
     else:
-        st.info("No photos found yet. Create a folder named 'photos' and add JPG/PNG images to show them here.")
+        # Keep it minimal, not loud
+        st.markdown("<div class='subcap'>Optional: add a <b>photos/</b> folder with images to make this even more personal.</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.write("")
-    if st.button("Continue to your surprise 💌"):
+    if st.button("Continue 💌"):
         go(TOTAL + 2)
 
 elif st.session_state.stage == TOTAL + 2:
@@ -421,7 +409,7 @@ elif st.session_state.stage == TOTAL + 2:
         """
         <div class="val-card">
             <div class="val-title">Unlocked 💞</div>
-            <div class="val-sub">Your surprise is ready…</div>
+            <div class="val-sub">Your surprise is ready, my love…</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -456,7 +444,7 @@ elif st.session_state.stage == TOTAL + 4:
     st.markdown(
         """
         <div class="val-card">
-            <div class="val-title">Amber 💖</div>
+            <div class="val-title">Hey darling 💖</div>
             <div class="val-sub" style="font-size:20px; margin-top:12px;">
                 Will you be my Valentine?
             </div>
@@ -477,14 +465,15 @@ elif st.session_state.stage == TOTAL + 5:
     st.markdown(
         """
         <div class="val-card">
-            <div class="val-title" style="font-size:30px;">One last thing 💗</div>
+            <div class="val-title" style="font-size:32px;">One last thing 💗</div>
             <div class="val-sub" style="font-size:18px; margin-top:12px;">
-                Where do you wanna go for our date?
+                Where do you wanna go for our date, love?
             </div>
         </div>
         """,
         unsafe_allow_html=True
     )
+
     st.write("")
     c1, c2 = st.columns(2)
     with c1:
@@ -496,11 +485,9 @@ elif st.session_state.stage == TOTAL + 5:
             st.session_state.date_choice = "London 🏙️"
             go(TOTAL + 6)
 
-# Invitation Card (NEW)
 else:
     st.balloons()
     choice = st.session_state.date_choice or "A surprise date 💖"
-    today = datetime.now().strftime("%d %b %Y")
 
     st.markdown(
         f"""
@@ -510,7 +497,7 @@ else:
             <b>For:</b> Amber 💖<br>
             <b>From:</b> Usama ❤️<br><br>
             <b>Plan:</b> {choice}<br>
-            <b>Date:</b> {today}<br>
+            <b>Date:</b> {VAL_DATE}<br>
             <b>Dress code:</b> Cute (as always) 😘<br>
             <b>Note:</b> I’ll take care of everything.
           </div>
@@ -526,8 +513,8 @@ else:
         <div class="val-card">
           <div class="val-title">Perfect 💖</div>
           <div class="val-sub" style="font-size:18px;">
-            It’s a date 😘 <br>
-            I can’t wait to spend this day with you, Amber ❤️
+            It’s a date, my love 😘 <br>
+            I can’t wait to spend Valentine’s with you ❤️
           </div>
         </div>
         """,
@@ -539,4 +526,5 @@ else:
         st.session_state.stage = 0
         st.session_state.score = 0
         st.session_state.date_choice = None
+        st.session_state.show_music = False
         st.rerun()
