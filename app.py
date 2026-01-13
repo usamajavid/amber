@@ -1,162 +1,157 @@
 import streamlit as st
 import base64
+import random
 import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Amber ❤️ Osama", layout="centered")
 
-# ---------------- MUSIC (WORKING) ----------------
-def music_widget(file_path: str):
-    with open(file_path, "rb") as f:
-        b64 = base64.b64encode(f.read()).decode()
+# ---------- Load music once ----------
+@st.cache_data
+def load_mp3_bytes(path: str) -> bytes:
+    with open(path, "rb") as f:
+        return f.read()
 
-    # Uses localStorage to remember play state across reruns/pages
-    components.html(
-        f"""
-        <style>
-          .music-pill {{
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            z-index: 99999;
-            background: #ff4b6e;
-            color: white;
-            border: none;
-            padding: 10px 14px;
-            border-radius: 999px;
-            font-size: 14px;
-            cursor: pointer;
-            box-shadow: 0 6px 18px rgba(255, 75, 110, 0.35);
-          }}
-          .music-pill:active {{ transform: scale(0.98); }}
-        </style>
+MUSIC_BYTES = load_mp3_bytes("music.mp3")
 
-        <audio id="bgm" loop>
-          <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-        </audio>
-
-        <button class="music-pill" id="musicBtn">🎵 Play Music</button>
-
-        <script>
-          const audio = document.getElementById("bgm");
-          const btn = document.getElementById("musicBtn");
-
-          // Restore last state
-          const saved = localStorage.getItem("musicOn");
-          if (saved === "true") {{
-            audio.volume = 0.4;
-            audio.play().catch(()=>{{}});
-            btn.innerText = "⏸ Pause Music";
-          }}
-
-          btn.addEventListener("click", async () => {{
-            audio.volume = 0.4;
-
-            if (audio.paused) {{
-              try {{
-                await audio.play();
-                localStorage.setItem("musicOn", "true");
-                btn.innerText = "⏸ Pause Music";
-              }} catch (e) {{
-                // If blocked, show a hint
-                btn.innerText = "🔊 Tap again";
-              }}
-            }} else {{
-              audio.pause();
-              localStorage.setItem("musicOn", "false");
-              btn.innerText = "🎵 Play Music";
-            }}
-          }});
-        </script>
-        """,
-        height=0,
-    )
-
-# ---------------- HEARTS ----------------
-def floating_hearts():
-    components.html("""
-    <style>
-      .heart {
-        position: fixed;
-        bottom: -10px;
-        font-size: 22px;
-        animation: float 8s linear infinite;
-        z-index: 1;
-        pointer-events: none;
-      }
-      @keyframes float {
-        from { transform: translateY(0); opacity: 0.9; }
-        to   { transform: translateY(-110vh); opacity: 0.0; }
-      }
-    </style>
-    <script>
-      // Prevent duplicates on reruns
-      if (!window.__heartsStarted) {
-        window.__heartsStarted = true;
-
-        function spawnHeart() {
-          const h = document.createElement("div");
-          h.className = "heart";
-          h.textContent = ["💖","💕","💘","❤️"][Math.floor(Math.random()*4)];
-          h.style.left = Math.random() * 100 + "vw";
-          h.style.animationDuration = (Math.random()*4 + 6) + "s";
-          h.style.fontSize = (Math.random()*12 + 18) + "px";
-          document.body.appendChild(h);
-
-          setTimeout(() => h.remove(), 9000);
-        }
-
-        setInterval(spawnHeart, 500);
-      }
-    </script>
-    """, height=0)
-
-# ---- render widgets once per page load ----
-music_widget("music.mp3")
-floating_hearts()
-
-# ---------------- STATE ----------------
+# ---------- Session state ----------
 if "stage" not in st.session_state:
     st.session_state.stage = 0
 if "score" not in st.session_state:
     st.session_state.score = 0
 if "answered" not in st.session_state:
     st.session_state.answered = False
+if "music_on" not in st.session_state:
+    st.session_state.music_on = False
 
-# ---------------- STYLE ----------------
+# ---------- Valentine styling ----------
 st.markdown("""
 <style>
-body { background: linear-gradient(#ffe6f0,#fff0f5); }
-.card {
+:root{
+  --pink:#ff4b6e;
+  --bg1:#ffe6f0;
+  --bg2:#fff0f5;
+}
+body { background: linear-gradient(var(--bg1), var(--bg2)); }
+.block-container { padding-top: 1.2rem; }
+.card{
   background: white;
   padding: 26px;
   border-radius: 22px;
-  box-shadow: 0px 0px 24px rgba(255, 75, 110, 0.25);
+  box-shadow: 0 10px 30px rgba(255, 75, 110, 0.18);
   text-align: center;
   position: relative;
   z-index: 5;
 }
-.big { font-size: 40px; color: #ff4b6e; }
-button { border-radius: 20px !important; font-size: 18px !important; }
+.big{ font-size: 42px; color: var(--pink); font-weight: 800; }
+.sub{ font-size: 16px; opacity: 0.8; margin-top: 6px; }
+.small{ font-size: 14px; opacity: 0.75; }
+
+.stButton > button{
+  background: var(--pink) !important;
+  color: white !important;
+  border-radius: 18px !important;
+  font-size: 18px !important;
+  padding: 0.55rem 1rem !important;
+  border: none !important;
+  width: 100%;
+}
+.stButton > button:hover{ filter: brightness(0.98); }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- WELCOME ----------------
+# ---------- Floating hearts (visible + no iframe needed) ----------
+# We use an HTML component with a non-zero height so it actually renders.
+components.html("""
+<style>
+.hearts-wrap { position: fixed; inset: 0; pointer-events:none; z-index: 2; }
+.heart {
+  position: absolute;
+  bottom: -30px;
+  animation: floatUp linear forwards;
+  opacity: 0.95;
+  filter: drop-shadow(0 6px 12px rgba(255,75,110,0.25));
+}
+@keyframes floatUp {
+  from { transform: translateY(0) translateX(0); opacity: 0.95; }
+  to   { transform: translateY(-120vh) translateX(var(--drift)); opacity: 0.0; }
+}
+</style>
+<div class="hearts-wrap" id="hw"></div>
+<script>
+(function(){
+  if (window.__VAL_HEARTS__) return;
+  window.__VAL_HEARTS__ = true;
+
+  const wrap = document.getElementById("hw");
+  const emojis = ["💖","💕","💘","❤️","🌹"];
+  function spawn(){
+    const h = document.createElement("div");
+    h.className = "heart";
+    h.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    h.style.left = (Math.random()*100) + "vw";
+    h.style.fontSize = (18 + Math.random()*18) + "px";
+    h.style.setProperty("--drift", ((Math.random()*80)-40) + "px");
+    const dur = 6 + Math.random()*6;
+    h.style.animationDuration = dur + "s";
+    wrap.appendChild(h);
+    setTimeout(()=>h.remove(), (dur+0.5)*1000);
+  }
+  setInterval(spawn, 450);
+})();
+</script>
+""", height=10)
+
+# ---------- MUSIC UI (reliable) ----------
+st.markdown("<div class='card'><div class='big'>Amber 💖</div><div class='sub'>A Valentine just for you</div></div>", unsafe_allow_html=True)
+st.write("")
+
+colA, colB = st.columns([1,1], vertical_alignment="center")
+
+with colA:
+    if st.button("🎵 Play / Pause Music"):
+        st.session_state.music_on = not st.session_state.music_on
+
+with colB:
+    st.markdown(
+        "<div class='small'>Tip: Browsers block autoplay. Tap Play once and it’ll work.</div>",
+        unsafe_allow_html=True
+    )
+
+# Show audio player only when music_on is True (or always if you prefer)
+if st.session_state.music_on:
+    # Native Streamlit audio player (most compatible)
+    st.audio(MUSIC_BYTES, format="audio/mp3")
+
+st.write("")
+
+# ---------- Quiz data ----------
+quiz = [
+    ("Where did we first meet?", ["At university", "In your house", "On the street"], "In your house"),
+    ("Where did we go for our first date?", ["Hyde Park", "V&A museum", "Cinema"], "V&A museum"),
+    ("Amber, do you like me?", ["Maybe", "I love you", "You're okay 😅"], "I love you"),
+]
+
+TOTAL_Q = len(quiz)
+
+# ---------- Welcome / Flow ----------
 if st.session_state.stage == 0:
-    st.markdown("<div class='card'><div class='big'>Amber 💖</div><p>A Valentine just for you</p></div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class='card'>
+      <h2>Ready for a little love game? 💝</h2>
+      <p class='small'>Answer the questions… and unlock your surprise.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
     if st.button("Start Our Love Story ❤️"):
         st.session_state.stage = 1
 
-# ---------------- QUIZ ----------------
-quiz = [
-    ("Where did we first meet?", ["At university","In your house","On the street"], "In your house"),
-    ("Where did we go for our first date?", ["Hyde Park","V&A museum","Cinema"], "V&A museum"),
-    ("Amber, do you like me?", ["Maybe","I love you","You're okay 😅"], "I love you")
-]
-
-if 1 <= st.session_state.stage <= 3:
+elif 1 <= st.session_state.stage <= TOTAL_Q:
     q, options, answer = quiz[st.session_state.stage - 1]
-    st.markdown(f"<div class='card'><h2>{q}</h2>", unsafe_allow_html=True)
 
+    st.markdown(f"<div class='card'><h2>{q}</h2></div>", unsafe_allow_html=True)
+    st.write("")
+
+    # Answer selection
     if not st.session_state.answered:
         for opt in options:
             if st.button(opt, key=f"opt_{st.session_state.stage}_{opt}"):
@@ -165,44 +160,48 @@ if 1 <= st.session_state.stage <= 3:
                     st.session_state.score += 1
                     st.success("Correct 💕")
                 else:
-                    st.warning("Still loved 😘")
+                    st.warning("Even if you missed it… I still love you 😘")
 
+    # Next page
     if st.session_state.answered:
+        st.write("")
         if st.button("Next ❤️", key=f"next_{st.session_state.stage}"):
             st.session_state.stage += 1
             st.session_state.answered = False
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    # Love meter (fills correctly)
+    st.write("")
     st.markdown("### Love Meter 💖")
-    st.progress(st.session_state.score / 3)
+    st.progress(st.session_state.score / TOTAL_Q)
+    st.caption(f"Score: {st.session_state.score}/{TOTAL_Q}")
 
-# ---------------- UNLOCK ----------------
-if st.session_state.stage == 4:
-    st.markdown("<div class='card'><div class='big'>Love Meter Full 💞</div></div>", unsafe_allow_html=True)
+elif st.session_state.stage == TOTAL_Q + 1:
+    st.markdown("<div class='card'><div class='big'>Love Meter Full 💞</div><p>Time for your surprise…</p></div>", unsafe_allow_html=True)
     if st.button("Open Your Surprise 💌"):
-        st.session_state.stage = 5
+        st.session_state.stage += 1
 
-# ---------------- LOVE LETTER ----------------
-if st.session_state.stage == 5:
+elif st.session_state.stage == TOTAL_Q + 2:
+    st.balloons()
     st.markdown("""
     <div class='card'>
       <div class='big'>Amber 💕</div>
-      <p>
-      Hi baby,<br><br>
-      This is my Valentine’s Day proposal for you.
-      I would be the luckiest man in the world if you could accept my proposal and let me take you on a date.<br><br>
-      I love you. I cherish you. And I want to hang out with you for the rest of my life. ❤️<br><br>
-      — Osama
+      <h3>My Valentine Proposal</h3>
+      <p style="line-height:1.6;">
+        Hi baby,<br><br>
+        This is my Valentine’s Day proposal for you.
+        I would be the luckiest man in the world if you could accept my proposal and let me take you on a date.<br><br>
+        I love you.<br>
+        I cherish you.<br>
+        And I want to hang out with you for the rest of my life. ❤️<br><br>
+        — Osama
       </p>
     </div>
     """, unsafe_allow_html=True)
 
     if st.button("💍 Continue"):
-        st.session_state.stage = 6
+        st.session_state.stage += 1
 
-# ---------------- FINAL PROPOSAL ----------------
-if st.session_state.stage == 6:
-    st.balloons()
+elif st.session_state.stage == TOTAL_Q + 3:
     st.markdown("""
     <div class='card'>
       <div class='big'>Amber 💖</div>
@@ -213,13 +212,12 @@ if st.session_state.stage == 6:
     c1, c2 = st.columns(2)
     with c1:
         if st.button("YES 💕"):
-            st.session_state.stage = 7
+            st.session_state.stage += 1
     with c2:
         if st.button("OF COURSE 😍"):
-            st.session_state.stage = 7
+            st.session_state.stage += 1
 
-# ---------------- CELEBRATION ----------------
-if st.session_state.stage == 7:
+else:
     st.balloons()
     st.markdown("""
     <div class='card'>
