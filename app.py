@@ -1,5 +1,6 @@
 import streamlit as st
 import base64
+import random
 import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Amber ❤️ Usama", page_icon="💖", layout="centered")
@@ -12,7 +13,7 @@ def load_audio_b64(path: str) -> str:
 
 AUDIO_B64 = load_audio_b64("music.mp3")
 
-# ------------------------ GLOBAL BACKGROUND + THEME ------------------------
+# ------------------------ GLOBAL THEME (FULL PAGE BACKGROUND) ------------------------
 st.markdown(
     """
 <style>
@@ -25,14 +26,14 @@ html, body, [data-testid="stAppViewContainer"] {
       linear-gradient(180deg, #090016, #1a002d) !important;
 }
 
-/* remove default white */
+/* Remove default white background */
 [data-testid="stAppViewContainer"] > .main {
     background: transparent !important;
 }
 
-/* Center width */
+/* Center width + space for top bar */
 .block-container {
-    padding-top: 4.5rem !important; /* space for music bar */
+    padding-top: 4.5rem !important;
     max-width: 880px !important;
 }
 
@@ -46,7 +47,7 @@ html, body, [data-testid="stAppViewContainer"] {
     text-align: center;
 }
 
-/* Text (VISIBLE) */
+/* Text */
 .val-title {
     font-family: ui-sans-serif, system-ui;
     font-size: 42px;
@@ -78,29 +79,26 @@ html, body, [data-testid="stAppViewContainer"] {
 .stButton > button:hover{ filter: brightness(1.02); }
 .stButton > button:active{ transform: scale(0.99); }
 
-/* Keep Streamlit content above background */
+/* Keep content above hearts */
 section.main > div { position: relative; z-index: 3; }
 
-/* Progress style spacing */
+/* Progress spacing */
 [data-testid="stProgress"] { margin: 10px 0 20px 0; }
 </style>
 """,
     unsafe_allow_html=True
 )
 
-# ------------------------ FULL PAGE HEARTS (FIXED & VISIBLE) ------------------------
-components.html(
-    import random
-
-def render_hearts(n=28):
+# ------------------------ HEARTS (PURE CSS — WORKS EVERY TIME) ------------------------
+def render_hearts(n=35):
     emojis = ["💖", "💕", "💘", "❤️", "🌹", "✨"]
     spans = []
     for _ in range(n):
         left = random.randint(0, 100)
-        size = random.randint(18, 34)
-        dur = round(random.uniform(6.5, 12.5), 2)
+        size = random.randint(18, 36)
+        dur = round(random.uniform(7.5, 14.5), 2)
         delay = round(random.uniform(0, 6), 2)
-        drift = random.randint(-80, 80)
+        drift = random.randint(-90, 90)
         emoji = random.choice(emojis)
         spans.append(
             f"<span class='vheart' style='--l:{left}vw; --s:{size}px; --d:{dur}s; --t:{delay}s; --x:{drift}px'>{emoji}</span>"
@@ -113,13 +111,13 @@ def render_hearts(n=28):
           position: fixed;
           inset: 0;
           pointer-events: none;
-          z-index: 2; /* above bg, below cards */
+          z-index: 2; /* above background */
           overflow: hidden;
         }}
         .vheart {{
           position: absolute;
           left: var(--l);
-          bottom: -50px;
+          bottom: -60px;
           font-size: var(--s);
           animation: vfloat var(--d) linear infinite;
           animation-delay: var(--t);
@@ -130,7 +128,7 @@ def render_hearts(n=28):
         @keyframes vfloat {{
           0%   {{ transform: translate(0, 0) rotate(0deg); opacity: .95; }}
           15%  {{ opacity: .95; }}
-          100% {{ transform: translate(var(--x), -125vh) rotate(18deg); opacity: 0; }}
+          100% {{ transform: translate(var(--x), -125vh) rotate(22deg); opacity: 0; }}
         }}
         </style>
 
@@ -142,7 +140,6 @@ def render_hearts(n=28):
     )
 
 render_hearts()
-)
 
 # ------------------------ MUSIC BAR (TOP) ------------------------
 components.html(
@@ -335,7 +332,7 @@ elif st.session_state.stage == TOTAL + 2:
             I would be the luckiest man in the world if you could accept my proposal and let me take you on a date.<br><br>
             I love you.<br>
             I cherish you.<br>
-            And I want to hang out with you for the rest of my life. ❤️<br><br>
+            And I want to hangout with you for the rest of my life. ❤️<br><br>
             — Usama
             </div>
         </div>
@@ -368,7 +365,6 @@ elif st.session_state.stage == TOTAL + 3:
         if st.button("OF COURSE 😍"):
             go(TOTAL + 4)
 
-# ✅ NEW FINAL QUESTION
 elif st.session_state.stage == TOTAL + 4:
     st.markdown(
         """
@@ -405,6 +401,7 @@ else:
         """,
         unsafe_allow_html=True
     )
+
     st.write("")
     if st.button("Replay ✨"):
         st.session_state.stage = 0
