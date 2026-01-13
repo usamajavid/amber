@@ -12,12 +12,11 @@ def autoplay_audio(file_path):
         b64 = base64.b64encode(audio_bytes).decode()
 
     audio_html = f"""
-    <audio id="bgmusic" autoplay loop>
+    <audio autoplay loop>
     <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
     </audio>
     <script>
-    var audio = document.getElementById("bgmusic");
-    audio.volume = 0.4;
+    document.querySelector("audio").volume = 0.4;
     </script>
     """
     components.html(audio_html, height=0)
@@ -39,7 +38,7 @@ st.markdown("""
 body { background-color:#fff0f5; }
 .big { font-size:42px; text-align:center; color:#ff4b4b; }
 .center { text-align:center; }
-.option button { width:100%; font-size:18px; margin:5px 0; }
+button { width:100%; font-size:18px; margin:8px 0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -52,43 +51,29 @@ if st.session_state.stage == 0:
     if st.button("Start Our Story"):
         st.session_state.stage = 1
         st.session_state.music = True
-        st.experimental_rerun()
 
 # ---------------- QUESTIONS ----------------
 quiz = [
-    {
-        "q": "Where did we first meet?",
-        "options": ["At university", "In your house", "On the street"],
-        "answer": "In your house"
-    },
-    {
-        "q": "Where did we go for our first date?",
-        "options": ["Hyde Park", "Cinema", "V&A museum"],
-        "answer": "V&A museum"
-    },
-    {
-        "q": "Amber, do you like me?",
-        "options": ["Maybe", "I love you", "You're okay 😅"],
-        "answer": "I love you"
-    }
+    ("Where did we first meet?", ["At university", "In your house", "On the street"], "In your house"),
+    ("Where did we go for our first date?", ["Hyde Park", "V&A museum", "Cinema"], "V&A museum"),
+    ("Amber, do you like me?", ["Maybe", "I love you", "You're okay 😅"], "I love you")
 ]
 
 if 1 <= st.session_state.stage <= 3:
-    qdata = quiz[st.session_state.stage - 1]
+    q, options, answer = quiz[st.session_state.stage - 1]
 
-    st.subheader(qdata["q"])
+    st.subheader(q)
 
-    for opt in qdata["options"]:
+    for opt in options:
         if st.button(opt):
-            if opt == qdata["answer"]:
+            if opt == answer:
                 st.session_state.score += 1
                 st.success("Correct 💖")
             else:
                 st.warning("Even if you missed it… I still love you 😘")
 
-            time.sleep(0.8)
+            time.sleep(0.6)
             st.session_state.stage += 1
-            st.experimental_rerun()
 
     st.markdown("### Love Meter 💕")
     st.progress(st.session_state.score / 3)
@@ -98,7 +83,6 @@ if st.session_state.stage == 4:
     st.markdown("<div class='big'>Love Meter Full 💞</div>", unsafe_allow_html=True)
     if st.button("Open Your Surprise 💌"):
         st.session_state.stage = 5
-        st.experimental_rerun()
 
 # ---------------- LOVE LETTER ----------------
 if st.session_state.stage == 5:
