@@ -90,61 +90,58 @@ section.main > div { position: relative; z-index: 3; }
 
 # ------------------------ FULL PAGE HEARTS (FIXED & VISIBLE) ------------------------
 components.html(
-    """
-<style>
-.hearts-wrap {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 2; /* IMPORTANT: above background but below cards */
-    overflow: hidden;
-}
+    import random
 
-.heart {
-    position: absolute;
-    bottom: -40px;
-    opacity: 0.95;
-    filter: drop-shadow(0 12px 18px rgba(255,75,139,0.25));
-    animation: floatUp linear forwards;
-}
+def render_hearts(n=28):
+    emojis = ["💖", "💕", "💘", "❤️", "🌹", "✨"]
+    spans = []
+    for _ in range(n):
+        left = random.randint(0, 100)
+        size = random.randint(18, 34)
+        dur = round(random.uniform(6.5, 12.5), 2)
+        delay = round(random.uniform(0, 6), 2)
+        drift = random.randint(-80, 80)
+        emoji = random.choice(emojis)
+        spans.append(
+            f"<span class='vheart' style='--l:{left}vw; --s:{size}px; --d:{dur}s; --t:{delay}s; --x:{drift}px'>{emoji}</span>"
+        )
 
-@keyframes floatUp {
-    from { transform: translateY(0) translateX(0) rotate(0deg); opacity: .95; }
-    to   { transform: translateY(-125vh) translateX(var(--dx)) rotate(var(--rot)); opacity: 0; }
-}
-</style>
+    st.markdown(
+        f"""
+        <style>
+        .vhearts {{
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          z-index: 2; /* above bg, below cards */
+          overflow: hidden;
+        }}
+        .vheart {{
+          position: absolute;
+          left: var(--l);
+          bottom: -50px;
+          font-size: var(--s);
+          animation: vfloat var(--d) linear infinite;
+          animation-delay: var(--t);
+          filter: drop-shadow(0 10px 16px rgba(255,75,139,0.25));
+          opacity: 0.95;
+          will-change: transform, opacity;
+        }}
+        @keyframes vfloat {{
+          0%   {{ transform: translate(0, 0) rotate(0deg); opacity: .95; }}
+          15%  {{ opacity: .95; }}
+          100% {{ transform: translate(var(--x), -125vh) rotate(18deg); opacity: 0; }}
+        }}
+        </style>
 
-<div class="hearts-wrap" id="hw"></div>
+        <div class="vhearts">
+          {''.join(spans)}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-<script>
-(function(){
-  // prevent duplicates
-  if (window.__FULLPAGE_HEARTS__) return;
-  window.__FULLPAGE_HEARTS__ = true;
-
-  const wrap = document.getElementById("hw");
-  const emojis = ["💖","💕","💘","❤️","🌹","✨"];
-
-  function spawn(){
-    const h = document.createElement("div");
-    h.className = "heart";
-    h.textContent = emojis[Math.floor(Math.random()*emojis.length)];
-    h.style.left = (Math.random()*100) + "vw";
-    h.style.fontSize = (18 + Math.random()*26) + "px";
-    h.style.setProperty("--dx", ((Math.random()*140)-70) + "px");
-    h.style.setProperty("--rot", ((Math.random()*50)-25) + "deg");
-    const dur = 6 + Math.random()*6;
-    h.style.animationDuration = dur + "s";
-
-    wrap.appendChild(h);
-    setTimeout(()=>h.remove(), (dur+0.5)*1000);
-  }
-
-  setInterval(spawn, 350);
-})();
-</script>
-""",
-    height=0
+render_hearts()
 )
 
 # ------------------------ MUSIC BAR (TOP) ------------------------
