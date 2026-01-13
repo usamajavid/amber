@@ -1,13 +1,10 @@
 import streamlit as st
 import base64
-import random
-import time
 import streamlit.components.v1 as components
 
-# ------------------------ PAGE CONFIG ------------------------
 st.set_page_config(page_title="Amber ❤️ Osama", page_icon="💖", layout="centered")
 
-# ------------------------ HELPERS ------------------------
+# ------------------------ AUDIO (for the music bar iframe) ------------------------
 @st.cache_data
 def load_audio_b64(path: str) -> str:
     with open(path, "rb") as f:
@@ -15,290 +12,243 @@ def load_audio_b64(path: str) -> str:
 
 AUDIO_B64 = load_audio_b64("music.mp3")
 
-def ui_fx(audio_b64: str):
+# ------------------------ GLOBAL BACKGROUND + UI THEME ------------------------
+st.markdown(
     """
-    Premium UI layer:
-    - gradient background
-    - floating hearts
-    - subtle sparkles
-    - fixed music control bar with Play/Pause
+<style>
+/* FULL PAGE BACKGROUND */
+html, body, [data-testid="stAppViewContainer"] {
+    height: 100%;
+    background:
+      radial-gradient(900px 500px at 20% 10%, rgba(255,75,139,0.25), transparent 55%),
+      radial-gradient(800px 500px at 80% 30%, rgba(255,123,189,0.18), transparent 60%),
+      linear-gradient(180deg, #090016, #1a002d) !important;
+}
+
+/* remove the default white background behind the app */
+[data-testid="stAppViewContainer"] > .main {
+    background: transparent !important;
+}
+
+/* nicer spacing */
+.block-container {
+    padding-top: 1.0rem !important;
+    max-width: 880px !important;
+}
+
+/* CARD - FIXED TEXT COLOR */
+.val-card {
+    background: rgba(255,255,255,0.92);
+    border: 1px solid rgba(255,255,255,0.55);
+    border-radius: 26px;
+    padding: 28px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+    text-align: center;
+}
+
+/* FIXED TEXT COLORS */
+.val-title {
+    font-family: ui-sans-serif, system-ui;
+    font-size: 42px;
+    font-weight: 900;
+    color: #2b0a1a;   /* DARK TEXT so it shows */
+}
+.val-sub {
+    font-family: ui-sans-serif, system-ui;
+    font-size: 15px;
+    font-weight: 600;
+    color: #5b2b3f;   /* DARKER subtitle */
+    opacity: 0.92;
+    margin-top: 8px;
+}
+
+/* Button style */
+.stButton > button{
+    width: 100%;
+    border: 0 !important;
+    border-radius: 18px !important;
+    padding: 0.85rem 1rem !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    color: white !important;
+    background: linear-gradient(135deg, rgba(255,75,139,0.98), rgba(255,123,189,0.98)) !important;
+    box-shadow: 0 18px 45px rgba(255,75,139,0.25) !important;
+}
+.stButton > button:hover{ filter: brightness(1.02); }
+.stButton > button:active{ transform: scale(0.99); }
+
+/* Progress bar spacing */
+[data-testid="stProgress"] {
+    margin-top: 6px;
+    margin-bottom: 16px;
+}
+</style>
+""",
+    unsafe_allow_html=True
+)
+
+# ------------------------ HEARTS FULL PAGE (NOT JUST TOP) ------------------------
+components.html(
     """
-    components.html(
-        f"""
-        <style>
-          :root {{
-            --bg1: #090016;
-            --bg2: #1a002d;
-            --pink: #ff4b8b;
-            --rose: #ff7bbd;
-            --gold: #ffd1e6;
-            --card: rgba(255,255,255,0.08);
-            --stroke: rgba(255,255,255,0.14);
-            --shadow: 0 18px 60px rgba(0,0,0,0.45);
-          }}
+<style>
+.hearts-wrap { position: fixed; inset: 0; pointer-events:none; z-index: 1; overflow:hidden; }
+.heart {
+  position: absolute;
+  bottom: -40px;
+  opacity: 0.90;
+  filter: drop-shadow(0 12px 18px rgba(255,75,139,0.25));
+  animation: floatUp linear forwards;
+}
+@keyframes floatUp {
+  from { transform: translateY(0) translateX(0) rotate(0deg); opacity: .95; }
+  to   { transform: translateY(-120vh) translateX(var(--dx)) rotate(var(--rot)); opacity: 0; }
+}
+</style>
 
-          /* Background */
-          body {{
-            background: radial-gradient(900px 500px at 20% 10%, rgba(255,75,139,0.25), transparent 55%),
-                        radial-gradient(800px 500px at 80% 30%, rgba(255,123,189,0.18), transparent 60%),
-                        linear-gradient(180deg, var(--bg1), var(--bg2)) !important;
-          }}
+<div class="hearts-wrap" id="hw"></div>
 
-          /* Softer Streamlit container spacing */
-          .block-container {{
-            padding-top: 1.0rem !important;
-            max-width: 880px !important;
-          }}
+<script>
+(function(){
+  if (window.__FULLPAGE_HEARTS__) return;
+  window.__FULLPAGE_HEARTS__ = true;
 
-          /* Floating hearts */
-          .val-layer {{
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-          }}
+  const wrap = document.getElementById("hw");
+  const emojis = ["💖","💕","💘","❤️","🌹","✨"];
 
-          .h {{
-            position: absolute;
-            bottom: -40px;
-            opacity: 0.85;
-            filter: drop-shadow(0 12px 18px rgba(255,75,139,0.20));
-            animation: floatUp linear forwards;
-          }}
+  function spawn(){
+    const h = document.createElement("div");
+    h.className = "heart";
+    h.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    h.style.left = (Math.random()*100) + "vw";
+    h.style.fontSize = (18 + Math.random()*22) + "px";
+    h.style.setProperty("--dx", ((Math.random()*120)-60) + "px");
+    h.style.setProperty("--rot", ((Math.random()*40)-20) + "deg");
+    const dur = 7 + Math.random()*6;
+    h.style.animationDuration = dur + "s";
+    wrap.appendChild(h);
+    setTimeout(()=>h.remove(), (dur+0.5)*1000);
+  }
+  setInterval(spawn, 420);
+})();
+</script>
+""",
+    height=0
+)
 
-          @keyframes floatUp {{
-            from {{ transform: translateY(0) translateX(0) rotate(0deg); opacity: .9; }}
-            to   {{ transform: translateY(-120vh) translateX(var(--dx)) rotate(var(--rot)); opacity: 0; }}
-          }}
+# ------------------------ MUSIC BAR (VISIBLE) ------------------------
+components.html(
+    f"""
+<style>
+.musicbar {{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 16px;
+  width: min(900px, calc(100vw - 28px));
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.16);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 18px;
+  padding: 12px 14px;
+  z-index: 9999;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}}
 
-          /* Subtle sparkle */
-          .spark {{
-            position: absolute;
-            width: 2px; height: 2px;
-            background: rgba(255,255,255,0.6);
-            border-radius: 999px;
-            box-shadow: 0 0 12px rgba(255,255,255,0.35);
-            animation: twinkle 2.4s ease-in-out infinite;
-          }}
-          @keyframes twinkle {{
-            0%,100% {{ transform: scale(0.6); opacity: 0.3; }}
-            50%     {{ transform: scale(1.5); opacity: 0.8; }}
-          }}
+.mb-title {{
+  flex: 1;
+  color: rgba(255,255,255,0.92);
+  font-family: ui-sans-serif, system-ui;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+}}
+.mb-sub {{
+  display:block;
+  color: rgba(255,255,255,0.65);
+  font-weight: 600;
+  font-size: 11px;
+  margin-top: 2px;
+}}
 
-          /* Music Bar */
-          .musicbar {{
-            position: fixed;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: 18px;
-            width: min(720px, calc(100vw - 28px));
-            background: rgba(255,255,255,0.10);
-            border: 1px solid rgba(255,255,255,0.16);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border-radius: 18px;
-            padding: 12px 14px;
-            z-index: 9999;
-            box-shadow: 0 18px 60px rgba(0,0,0,0.35);
-            display: flex;
-            gap: 10px;
-            align-items: center;
-          }}
+.mb-btn {{
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(255,75,139,0.95), rgba(255,123,189,0.95));
+  color: white;
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-family: ui-sans-serif, system-ui;
+  font-weight: 800;
+  font-size: 12px;
+  box-shadow: 0 16px 40px rgba(255,75,139,0.18);
+}}
+.mb-btn:active {{ transform: scale(0.98); }}
+</style>
 
-          .mb-title {{
-            flex: 1;
-            color: rgba(255,255,255,0.90);
-            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-            font-weight: 600;
-            letter-spacing: .2px;
-            font-size: 13px;
-            line-height: 1.2;
-          }}
-          .mb-sub {{
-            display:block;
-            color: rgba(255,255,255,0.60);
-            font-weight: 500;
-            font-size: 11px;
-            margin-top: 2px;
-          }}
+<audio id="bgm" loop>
+  <source src="data:audio/mp3;base64,{AUDIO_B64}" type="audio/mp3" />
+</audio>
 
-          .mb-btn {{
-            border: none;
-            cursor: pointer;
-            background: linear-gradient(135deg, rgba(255,75,139,0.95), rgba(255,123,189,0.95));
-            color: white;
-            border-radius: 14px;
-            padding: 10px 12px;
-            font-family: ui-sans-serif, system-ui;
-            font-weight: 700;
-            font-size: 12px;
-            letter-spacing: .2px;
-            box-shadow: 0 16px 40px rgba(255,75,139,0.18);
-          }}
-          .mb-btn:active {{ transform: scale(0.98); }}
+<div class="musicbar">
+  <div class="mb-title">
+    For Amber 💖
+    <span class="mb-sub">Tap Play (browsers block autoplay until you interact)</span>
+  </div>
+  <button class="mb-btn" id="mbPlay">▶ Play</button>
+  <button class="mb-btn" id="mbPause" style="display:none;">⏸ Pause</button>
+</div>
 
-          /* Make Streamlit widgets sit above background layer */
-          section.main > div {{
-            position: relative;
-            z-index: 3;
-          }}
+<script>
+  const audio = document.getElementById("bgm");
+  const playBtn = document.getElementById("mbPlay");
+  const pauseBtn = document.getElementById("mbPause");
 
-        </style>
+  const saved = localStorage.getItem("val_music_on");
+  if (saved === "true") {{
+    audio.volume = 0.45;
+    audio.play().then(()=> {{
+      playBtn.style.display="none";
+      pauseBtn.style.display="inline-block";
+    }}).catch(()=>{{}});
+  }}
 
-        <div class="val-layer" id="valLayer"></div>
+  playBtn.addEventListener("click", async () => {{
+    audio.volume = 0.45;
+    try {{
+      await audio.play();
+      localStorage.setItem("val_music_on","true");
+      playBtn.style.display="none";
+      pauseBtn.style.display="inline-block";
+    }} catch(e) {{
+      playBtn.textContent = "🔊 Tap again";
+    }}
+  }});
 
-        <audio id="bgm" loop>
-          <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mp3" />
-        </audio>
+  pauseBtn.addEventListener("click", () => {{
+    audio.pause();
+    localStorage.setItem("val_music_on","false");
+    pauseBtn.style.display="none";
+    playBtn.style.display="inline-block";
+    playBtn.textContent = "▶ Play";
+  }});
+</script>
+""",
+    height=80
+)
 
-        <div class="musicbar">
-          <div class="mb-title">
-            For Amber 💖
-            <span class="mb-sub">Tap play (browsers block autoplay until you interact)</span>
-          </div>
-          <button class="mb-btn" id="mbPlay">▶ Play</button>
-          <button class="mb-btn" id="mbPause" style="display:none;">⏸ Pause</button>
-        </div>
-
-        <script>
-          const layer = document.getElementById("valLayer");
-          const audio = document.getElementById("bgm");
-          const playBtn = document.getElementById("mbPlay");
-          const pauseBtn = document.getElementById("mbPause");
-
-          // Restore prior state
-          const saved = localStorage.getItem("val_music_on");
-          if (saved === "true") {{
-            audio.volume = 0.45;
-            audio.play().then(()=> {{
-              playBtn.style.display="none";
-              pauseBtn.style.display="inline-block";
-            }}).catch(()=>{{}});
-          }}
-
-          playBtn.addEventListener("click", async () => {{
-            audio.volume = 0.45;
-            try {{
-              await audio.play();
-              localStorage.setItem("val_music_on","true");
-              playBtn.style.display="none";
-              pauseBtn.style.display="inline-block";
-            }} catch(e) {{
-              playBtn.textContent = "🔊 Tap again";
-            }}
-          }});
-
-          pauseBtn.addEventListener("click", () => {{
-            audio.pause();
-            localStorage.setItem("val_music_on","false");
-            pauseBtn.style.display="none";
-            playBtn.style.display="inline-block";
-            playBtn.textContent = "▶ Play";
-          }});
-
-          // Floating hearts (prevent duplicates on reruns)
-          if (!window.__VAL_HEARTS__) {{
-            window.__VAL_HEARTS__ = true;
-            const emojis = ["💖","💕","💘","❤️","🌹","✨"];
-            function spawnHeart() {{
-              const h = document.createElement("div");
-              h.className = "h";
-              h.textContent = emojis[Math.floor(Math.random()*emojis.length)];
-              h.style.left = (Math.random()*100) + "vw";
-              h.style.fontSize = (18 + Math.random()*22) + "px";
-              h.style.setProperty("--dx", ((Math.random()*120)-60) + "px");
-              h.style.setProperty("--rot", ((Math.random()*40)-20) + "deg");
-              const dur = 7 + Math.random()*6;
-              h.style.animationDuration = dur + "s";
-              layer.appendChild(h);
-              setTimeout(()=>h.remove(), (dur+0.5)*1000);
-            }}
-            setInterval(spawnHeart, 420);
-
-            // Sparkles
-            for (let i=0; i<24; i++) {{
-              const s = document.createElement("div");
-              s.className = "spark";
-              s.style.left = (Math.random()*100) + "vw";
-              s.style.top = (Math.random()*100) + "vh";
-              s.style.animationDelay = (Math.random()*2.5) + "s";
-              layer.appendChild(s);
-            }}
-          }}
-        </script>
-        """,
-        height=120,  # IMPORTANT: not 0, so bar is visible
-    )
-
-def card(title: str, subtitle: str = ""):
-    st.markdown(
-        f"""
-        <div style="
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 26px;
-          padding: 26px 26px 22px 26px;
-          box-shadow: 0 18px 60px rgba(0,0,0,0.40);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          margin-bottom: 14px;
-        ">
-          <div style="font-family: ui-sans-serif, system-ui; font-weight: 900; font-size: 44px;
-                      letter-spacing:-0.5px; color: rgba(255,255,255,0.95); line-height:1.05;">
-            {title}
-          </div>
-          <div style="margin-top: 8px; font-family: ui-sans-serif, system-ui; font-weight: 600;
-                      color: rgba(255,255,255,0.72); font-size: 15px; line-height:1.5;">
-            {subtitle}
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-def premium_button_css():
-    st.markdown(
-        """
-        <style>
-        .stButton > button{
-          width: 100%;
-          border: 0 !important;
-          border-radius: 18px !important;
-          padding: 0.85rem 1rem !important;
-          font-size: 18px !important;
-          font-weight: 800 !important;
-          letter-spacing: 0.2px !important;
-          color: rgba(255,255,255,0.95) !important;
-          background: linear-gradient(135deg, rgba(255,75,139,0.95), rgba(255,123,189,0.95)) !important;
-          box-shadow: 0 18px 45px rgba(255,75,139,0.20) !important;
-        }
-        .stButton > button:hover{ filter: brightness(1.02); }
-        .stButton > button:active{ transform: scale(0.99); }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-def set_stage(new_stage: int):
-    st.session_state.stage = new_stage
-    st.rerun()
-
-def answer_and_advance(is_correct: bool):
-    if is_correct:
-        st.session_state.score += 1
-    st.session_state.stage += 1
-    st.rerun()
-
-# ------------------------ STATE ------------------------
+# ------------------------ APP STATE ------------------------
 if "stage" not in st.session_state:
     st.session_state.stage = 0
 if "score" not in st.session_state:
     st.session_state.score = 0
 
-# ------------------------ RENDER FX LAYER ------------------------
-ui_fx(AUDIO_B64)
-premium_button_css()
+def go(stage: int):
+    st.session_state.stage = stage
+    st.rerun()
 
 # ------------------------ QUIZ DATA ------------------------
 quiz = [
@@ -308,71 +258,69 @@ quiz = [
 ]
 TOTAL = len(quiz)
 
-# ------------------------ TOP PROGRESS ------------------------
-# Professional progress indicator
-progress = min(1.0, st.session_state.score / TOTAL if TOTAL else 0)
-st.progress(progress)
+# ------------------------ PROGRESS ------------------------
+st.progress(min(1.0, st.session_state.score / TOTAL))
 
 # ------------------------ PAGES ------------------------
 if st.session_state.stage == 0:
-    card("Amber 💖", "I made this for you — a little love experience, not just a message.")
     st.markdown(
-        "<div style='color:rgba(255,255,255,0.70); font-family:ui-sans-serif,system-ui; "
-        "margin: 10px 0 18px 0;'>"
-        "Put your headphones on… then press start. 💌"
-        "</div>",
+        """
+        <div class="val-card">
+            <div class="val-title">Amber 💖</div>
+            <div class="val-sub">
+                I made this just for you. Put your headphones on… then press start. 💌
+            </div>
+        </div>
+        """,
         unsafe_allow_html=True
     )
-    if st.button("Start Our Love Story ❤️"):
-        set_stage(1)
+    st.write("")
+    if st.button("Start Our Love Story 💞"):
+        go(1)
 
 elif 1 <= st.session_state.stage <= TOTAL:
-    q, options, correct = quiz[st.session_state.stage - 1]
-    card("A little quiz…", f"Question {st.session_state.stage} of {TOTAL}")
+    q, options, answer = quiz[st.session_state.stage - 1]
+
     st.markdown(
-        f"<div style='font-size:26px; font-weight:900; color:rgba(255,255,255,0.93); "
-        f"font-family:ui-sans-serif,system-ui; margin: 6px 0 10px 0;'>{q}</div>",
+        f"""
+        <div class="val-card">
+            <div class="val-title" style="font-size:28px;">Question {st.session_state.stage} of {TOTAL}</div>
+            <div class="val-sub" style="font-size:18px; margin-top:10px;">{q}</div>
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
-    # Two-column options for a premium layout
+    st.write("")
     cols = st.columns(2)
     for i, opt in enumerate(options):
         with cols[i % 2]:
             if st.button(opt, key=f"opt_{st.session_state.stage}_{i}"):
-                answer_and_advance(opt == correct)
-
-    # Love meter (fills instantly when score increases)
-    st.markdown(
-        f"<div style='margin-top:14px; color:rgba(255,255,255,0.70); font-family:ui-sans-serif,system-ui;'>"
-        f"Love Meter: <b style='color:rgba(255,255,255,0.95);'>{st.session_state.score}</b> / {TOTAL} 💗"
-        f"</div>",
-        unsafe_allow_html=True
-    )
+                if opt == answer:
+                    st.session_state.score += 1
+                st.session_state.stage += 1
+                st.rerun()
 
 elif st.session_state.stage == TOTAL + 1:
-    card("Unlocked 💞", "You’ve reached the surprise.")
-    if st.button("Open your surprise 💌"):
-        set_stage(TOTAL + 2)
-
-elif st.session_state.stage == TOTAL + 2:
-    # Letter with a premium feel
     st.markdown(
         """
-        <div style="
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 26px;
-          padding: 28px;
-          box-shadow: 0 18px 60px rgba(0,0,0,0.40);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-        ">
-          <div style="font-family:ui-sans-serif,system-ui; font-weight:900; font-size:36px; color:rgba(255,255,255,0.95);">
-            My Valentine Proposal 💍
-          </div>
-          <div style="margin-top:14px; font-family:ui-sans-serif,system-ui; font-size:16px; line-height:1.75;
-                      color:rgba(255,255,255,0.78);">
+        <div class="val-card">
+            <div class="val-title">Unlocked 💞</div>
+            <div class="val-sub">Your surprise is ready…</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    st.write("")
+    if st.button("Open Your Surprise 💌"):
+        go(TOTAL + 2)
+
+elif st.session_state.stage == TOTAL + 2:
+    st.markdown(
+        """
+        <div class="val-card">
+            <div class="val-title">My Valentine Proposal 💍</div>
+            <div class="val-sub" style="text-align:left; margin-top:16px; font-size:16px; line-height:1.75;">
             Hi baby,<br><br>
             This is my Valentine’s Day proposal for you.
             I would be the luckiest man in the world if you could accept my proposal and let me take you on a date.<br><br>
@@ -380,41 +328,49 @@ elif st.session_state.stage == TOTAL + 2:
             I cherish you.<br>
             And I want to hang out with you for the rest of my life. ❤️<br><br>
             — Osama
-          </div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True
     )
     st.write("")
     if st.button("Continue 💖"):
-        set_stage(TOTAL + 3)
+        go(TOTAL + 3)
 
 elif st.session_state.stage == TOTAL + 3:
-    card("Amber 💖", "One last question…")
     st.markdown(
-        "<div style='font-size:30px; font-weight:950; color:rgba(255,255,255,0.95); "
-        "font-family:ui-sans-serif,system-ui; margin: 6px 0 14px 0;'>"
-        "Will you be my Valentine?"
-        "</div>",
+        """
+        <div class="val-card">
+            <div class="val-title">Amber 💖</div>
+            <div class="val-sub" style="font-size:20px; margin-top:12px;">
+                Will you be my Valentine?
+            </div>
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
+    st.write("")
     c1, c2 = st.columns(2)
     with c1:
         if st.button("YES 💕"):
-            set_stage(TOTAL + 4)
+            go(TOTAL + 4)
     with c2:
         if st.button("OF COURSE 😍"):
-            set_stage(TOTAL + 4)
+            go(TOTAL + 4)
 
 else:
     st.balloons()
-    card("Yayyy 💖", "We have a Valentine date now 😘")
     st.markdown(
-        "<div style='color:rgba(255,255,255,0.78); font-family:ui-sans-serif,system-ui; "
-        "font-size:16px; line-height:1.7;'>"
-        "I can’t wait to spend this special day with you, Amber ❤️"
-        "</div>",
+        """
+        <div class="val-card">
+            <div class="val-title">Yayyy 💖</div>
+            <div class="val-sub" style="font-size:18px;">
+                We have a Valentine date now 😘<br>
+                I can’t wait to spend this day with you, Amber ❤️
+            </div>
+        </div>
+        """,
         unsafe_allow_html=True
     )
     st.write("")
